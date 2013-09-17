@@ -1,0 +1,1 @@
+This addon generates the MD5 hash of a file and saves it in an attribute. The addon uses a queue system added in concrete 5.6.2 to queue up the hashing of files.
