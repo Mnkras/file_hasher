@@ -16,8 +16,15 @@ class FileHasherPackage extends Package {
 	
 	public function install() {
 		$pkg = parent::install();
-
-		FileAttributeKey::add('text', array('akHandle' => 'file_hasher_md5', 'akName' => t('MD5'), 'akIsSearchable' => true), $pkg);
+		//Loader::model('file_hasher', 'file_hasher');
+		//FileHasherModel::saveEnabledHashes();
+		//FileAttributeKey::add('text', array('akHandle' => 'file_hasher_md5', 'akName' => t('MD5'), 'akIsSearchable' => true), $pkg);
 		Job::installByPackage('file_hasher', $pkg);
+
+		$p = SinglePage::add('/dashboard/files/hasher',$pkg);
+		$p->update(array('cName'=>t('Hasher')));
+		$p->setAttribute('icon_dashboard', 'icon-filter');
+		$json = Loader::helper('json');
+		$pkg->saveConfig('enabled_hashes', $json->encode(array()));
 	}
 }
