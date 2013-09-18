@@ -6,7 +6,7 @@ class FileHasher extends QueueableJob {
 
 	public $jSupportsQueue = true;
 
-	public $type = 'md5';
+	public $randomSeperator = '|*|';
 
 	public function getJobName() {
 		return t("File Hasher");
@@ -22,7 +22,7 @@ class FileHasher extends QueueableJob {
 			foreach (FileHasherModel::getEnabledHashes() as $value) {
 				$r = $db->Execute('select Files.fID from Files left join FileSearchIndexAttributes fsia on Files.fID = fsia.fID where (ak_file_hasher_'.$value.' is null or ak_file_hasher_'.$value.' = \'\') and (ak_file_hasher_exclude_file is null or ak_file_hasher_exclude_file = false)');
 				while ($row = $r->FetchRow()) {
-					$q->send($row['fID'].'|*|'.$value);//I really hope a hash never uses |*|
+					$q->send($row['fID'].$this->randomSeperator.$value);//I really hope a hash never uses |*|
 				}
 			}
 		}
@@ -35,7 +35,7 @@ class FileHasher extends QueueableJob {
 	}
 
 	public function processQueueItem(Zend_Queue_Message $msg) {
-		$info = explode('|*|', $msg->body);
+		$info = explode($this->randomSeperator, $msg->body);
 		$c = File::getByID($info[0], 'ACTIVE');
 		$cv = $c->getFile();
 		if (is_object($cv)) {
