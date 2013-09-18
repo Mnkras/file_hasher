@@ -40,7 +40,7 @@ class FileHasherModel {
 		}
 		if(count($list) > 0) {
 			foreach($list as $item) {
-				if (is_object($item) && !in_array(substr($item->getAttributeKeyHandle(), 12), self::getEnabledHashes())) {
+				if (is_object($item) && !in_array(substr($item->getAttributeKeyHandle(), 12), self::getEnabledHashes()) && $item->getAttributeKeyHandle() != 'file_hasher_exclude_file') {
 					$item->delete();
 				}
 			}

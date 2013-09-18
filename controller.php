@@ -26,5 +26,7 @@ class FileHasherPackage extends Package {
 		$p->setAttribute('icon_dashboard', 'icon-filter');
 		$json = Loader::helper('json');
 		$pkg->saveConfig('enabled_hashes', $json->encode(array()));
+
+		FileAttributeKey::add('boolean', array('akHandle' => 'file_hasher_exclude_file', 'akName' => t('Exclude file from being hashed'), 'akIsSearchable' => true), $pkg);
 	}
 }

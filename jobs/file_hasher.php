@@ -20,7 +20,7 @@ class FileHasher extends QueueableJob {
 		if(count(FileHasherModel::getEnabledHashes()) > 0) {
 			$db = Loader::db();
 			foreach (FileHasherModel::getEnabledHashes() as $value) {
-				$r = $db->Execute('select Files.fID from Files left join FileSearchIndexAttributes fsia on Files.fID = fsia.fID where (ak_file_hasher_'.$value.' is null or ak_file_hasher_'.$value.' = \'\')');
+				$r = $db->Execute('select Files.fID from Files left join FileSearchIndexAttributes fsia on Files.fID = fsia.fID where (ak_file_hasher_'.$value.' is null or ak_file_hasher_'.$value.' = \'\') and (ak_file_hasher_exclude_file is null or ak_file_hasher_exclude_file = false)');
 				while ($row = $r->FetchRow()) {
 					$q->send($row['fID'].'|*|'.$value);//I really hope a hash never uses |*|
 				}
@@ -30,7 +30,7 @@ class FileHasher extends QueueableJob {
 
 	public function finish(Zend_Queue $q) {
 		$db = Loader::db();
-		$total = $db->GetOne('select count(*) from FileSearchIndexAttributes');
+		$total = $db->GetOne('select count(*) from FileSearchIndexAttributes where (ak_file_hasher_exclude_file is null or ak_file_hasher_exclude_file = false)');
 		return t('Hashes updated. %s files hashed.', $total);
 	}
 
