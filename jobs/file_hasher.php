@@ -19,28 +19,13 @@ class FileHasher extends QueueableJob {
 	public function start(Zend_Queue $q) {
 		if(count(FileHasherModel::getEnabledHashes()) > 0) {
 			$db = Loader::db();
-			//$r = $db->Execute('select Files.fID from Files left join FileSearchIndexAttributes fsia on Files.fID = fsia.fID where (ak_file_hasher_'.$this->type.' is null or ak_file_hasher_'.$this->type.' = \'\')');
-			$r = $db->Execute('select Files.fID from Files left join FileSearchIndexAttributes fsia on Files.fID = fsia.fID where '.$this->generateQuery());
-			while ($row = $r->FetchRow()) {
-				$q->send($row['fID']);
+			foreach (FileHasherModel::getEnabledHashes() as $value) {
+				$r = $db->Execute('select Files.fID from Files left join FileSearchIndexAttributes fsia on Files.fID = fsia.fID where (ak_file_hasher_'.$value.' is null or ak_file_hasher_'.$value.' = \'\')');
+				while ($row = $r->FetchRow()) {
+					$q->send($row['fID'].'|*|'.$value);//I really hope a hash never uses |*|
+				}
 			}
 		}
-	}
-
-	private function generateQuery() {
-		$enabled = FileHasherModel::getEnabledHashes();
-		if(count($enabled) == 0) {
-			return '1=0';//fail
-		}
-		$str = '';
-		$lastindex = count($enabled) - 1;
-		foreach ($enabled as $index => $value) {
-			$str .= '(ak_file_hasher_'.$value.' is null or ak_file_hasher_'.$value.' = \'\')';
-			if($index != $lastindex) {
-				$str .= ' or ';
-			}
-		}
-		return $str;
 	}
 
 	public function finish(Zend_Queue $q) {
@@ -50,14 +35,12 @@ class FileHasher extends QueueableJob {
 	}
 
 	public function processQueueItem(Zend_Queue_Message $msg) {
-		$c = File::getByID($msg->body, 'ACTIVE');
+		$info = explode('|*|', $msg->body);
+		$c = File::getByID($info[0], 'ACTIVE');
 		$cv = $c->getFile();
 		if (is_object($cv)) {
-			$enabled = FileHasherModel::getEnabledHashes();
-			foreach ($enabled as $value) {
-				$hash = hash_file($value, $cv->getPath());
-				$c->setAttribute('file_hasher_'.$value, $hash);
-			}
+			$hash = hash_file($info[1], $cv->getPath());
+			$c->setAttribute('file_hasher_'.$info[1], $hash);
 			
 		}
 	}
