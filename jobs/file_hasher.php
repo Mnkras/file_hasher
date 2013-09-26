@@ -29,16 +29,20 @@ class FileHasher extends QueueableJob {
 	}
 
 	public function finish(Zend_Queue $q) {
-		$db = Loader::db();
-		$total = $db->GetOne('select count(*) from FileSearchIndexAttributes where (ak_file_hasher_exclude_file is null or ak_file_hasher_exclude_file = false)');
-		return t('Hashes updated. %s files hashed.', $total);
+		if(count(FileHasherModel::getEnabledHashes()) > 0) {
+			$db = Loader::db();
+			$total = $db->GetOne('select count(*) from FileSearchIndexAttributes where (ak_file_hasher_exclude_file is null or ak_file_hasher_exclude_file = false)');
+			$enabled = implode(', ', FileHasherModel::getEnabledHashes());
+			return t('Hashes updated. %s files hashed with %s.', $total, $enabled);
+		}
+		throw new Exception(t('Please choose at least one hash type before running this job!'));
 	}
 
 	public function processQueueItem(Zend_Queue_Message $msg) {
 		$info = explode($this->randomSeperator, $msg->body);
 		$c = File::getByID($info[0], 'ACTIVE');
 		$cv = $c->getFile();
-		if (is_object($cv)) {
+		if (is_object($cv) && $info[1]) {
 			$hash = hash_file($info[1], $cv->getPath());
 			$c->setAttribute('file_hasher_'.$info[1], $hash);
 			
