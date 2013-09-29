@@ -32,8 +32,9 @@ class FileHasher extends QueueableJob {
 		if(count(FileHasherModel::getEnabledHashes()) > 0) {
 			$db = Loader::db();
 			$total = $db->GetOne('select count(*) from FileSearchIndexAttributes where (ak_file_hasher_exclude_file is null or ak_file_hasher_exclude_file = false)');
-			$enabled = implode(', ', FileHasherModel::getEnabledHashes());
+			$enabled = FileHasherModel::getEnabledHashes();
 			if(version_compare(APP_VERSION, '5.6.2.2', '>=')) {
+				$enabled = implode(', ', $enabled);
 				return t('Hashes updated. %s files hashed with %s.', $total, $enabled);
 			} else {
 				return t('Hashes updated. %s files hashed with %s hashes.', $total, count($enabled));
